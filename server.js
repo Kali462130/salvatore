@@ -15,22 +15,40 @@ app.use(express.json());
 
 const allowedOrigins = [
   process.env.FRONTEND_URL,
-  'http://localhost:5173',
-  'http://localhost:5174',
-  'http://127.0.0.1:5173',
-  'http://127.0.0.1:5174'
+  'https://sg-connect-salvatore.vercel.app',
+  'http://localhost:5173'
 ].filter(Boolean);
 
-app.use(cors({
+const isAllowedOrigin = (origin) => {
+  if (!origin) {
+    return true;
+  }
+
+  if (allowedOrigins.includes(origin)) {
+    return true;
+  }
+
+  try {
+    const { hostname } = new URL(origin);
+    return hostname.endsWith('.vercel.app');
+  } catch (error) {
+    return false;
+  }
+};
+
+const corsOptions = {
   origin(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (isAllowedOrigin(origin)) {
       callback(null, true);
       return;
     }
 
-    callback(new Error(`Origin ${origin} not allowed by CORS`));
+    callback(null, false);
   }
-}));
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 connectDB();
 
